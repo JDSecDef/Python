@@ -1,3 +1,5 @@
+#Add download file check to confirm if succesful or not.
+
 import requests
 import xml.etree.ElementTree as ET
 import re
