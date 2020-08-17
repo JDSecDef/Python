@@ -1,5 +1,3 @@
-#Add download file check to confirm if succesful or not.
-
 import requests
 import xml.etree.ElementTree as ET
 import re
@@ -33,8 +31,14 @@ xmlurl = gethref.get('href')
 filename = xmlurl.split("%")
 month = filename[7]
 year = filename[8]
+
 print('\nDownloading the ISM XML File from ' + bcolors.OKGREEN + url + bcolors.ENDC)
 retrievexml = requests.get(xmlurl, allow_redirects=True)
+if '200' in str(retrievexml):
+  print(month[2:] + year[2:] + 'ISM.xml downloaded successfully')
+else:
+    print('ISM XML file failed to download')
+    exit()
 open(month[2:] + year[2:] + 'ISM.xml', 'wb').write(retrievexml.content)
 
 tree = ET.parse('./' + month[2:] + year[2:] + 'ISM.xml')
