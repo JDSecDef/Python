@@ -2,6 +2,9 @@ import requests
 import xml.etree.ElementTree as ET
 import re
 import bs4
+import matplotlib.pyplot as plt
+import numpy as np
+from collections import Counter
 
 class bcolors:
     HEADER = '\033[95m'
@@ -22,6 +25,7 @@ uniquesecret = 0
 secretcontrols = 0
 uniquetopsecret = 0
 topsecretcontrols = 0
+datelist = []
 
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
 retrievehtml = requests.get(url, allow_redirects=True)
@@ -32,17 +36,26 @@ filename = xmlurl.split("%")
 month = filename[7]
 year = filename[8]
 
-print('\nDownloading the ISM XML File from ' + bcolors.OKGREEN + url + bcolors.ENDC)
+print('\nDownloading the ISM XML File from ' + bcolors.OKGREEN + url + bcolors.ENDC + '.')
 retrievexml = requests.get(xmlurl, allow_redirects=True)
 if '200' in str(retrievexml):
-  print(month[2:] + year[2:] + 'ISM.xml downloaded successfully')
+  print(bcolors.OKGREEN +  month[2:] + ' ' + year[2:] + ' ' + 'ISM.xml ' + bcolors.ENDC + 'downloaded successfully.')
 else:
     print('ISM XML file failed to download')
     exit()
 open(month[2:] + year[2:] + 'ISM.xml', 'wb').write(retrievexml.content)
 
+print('Analysing the ' + bcolors.OKGREEN + month[2:] + ' ' + year[2:] + ' ' + 'ISM' + bcolors.ENDC + '\n')
+
 tree = ET.parse('./' + month[2:] + year[2:] + 'ISM.xml')
 root = tree.getroot()
+
+for control in root.findall('Control'):
+  datelist.append(control.find('Updated').text)
+
+datecount = Counter(datelist)
+for key, value in datecount.items():
+  print(bcolors.OKRED + str(value) + bcolors.ENDC + ' controls were updated in ' + str(key))
 
 for control in root.findall('Control'):
   official = control.find('OFFICIAL').text
@@ -67,8 +80,7 @@ for control in root.findall('Control'):
     topsecretcontrols+=1
 totalcontrols = sum(1 for entry in root.iter('Identifier'))
 
-print('Analysing the ' + bcolors.OKGREEN + month[2:] + ' ' + year[2:] + ' ' + 'ISM' + bcolors.ENDC + '\n')
-print('There are ' + bcolors.OKRED + str(uniqueofficial) + bcolors.ENDC + ' unique OFFICIAL controls in the ' + month[2:] + ' '  + year[2:] + ' ISM')
+print('\nThere are ' + bcolors.OKRED + str(uniqueofficial) + bcolors.ENDC + ' unique OFFICIAL controls in the ' + month[2:] + ' '  + year[2:] + ' ISM')
 print('There are ' + bcolors.OKRED + str(officialcontrols) + bcolors.ENDC + ' OFFICIAL Controls in the ' + month[2:] + ' '  + year[2:] + ' ISM')
 print('There are ' + bcolors.OKRED + str(uniqueprotected) + bcolors.ENDC + ' unique PROTECTED controls in the ' + month[2:] + ' '  + year[2:] + ' ISM')
 print('There are ' + bcolors.OKRED + str(protectedcontrols) + bcolors.ENDC + ' PROTECTED Controls in the ' + month[2:] + ' '  + year[2:] + ' ISM')
