@@ -1,3 +1,6 @@
+# Add top 5 most revised controls. 
+# Add the revision number to identify if control is new or updated. 
+
 import requests
 import xml.etree.ElementTree as ET
 import re
@@ -16,37 +19,39 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-totalcontrols = 0
-uniqueofficial = 0
-officialcontrols = 0
-uniqueprotected = 0
+totalcontrols     = 0
+uniqueofficial    = 0
+officialcontrols  = 0
+uniqueprotected   = 0
 protectedcontrols = 0
-uniquesecret = 0
-secretcontrols = 0
-uniquetopsecret = 0
+uniquesecret      = 0
+secretcontrols    = 0
+uniquetopsecret   = 0
 topsecretcontrols = 0
-datelist = []
+datelist          = []
 
+# Scrape CGA ISM page to get XML file.  
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
 retrievehtml = requests.get(url, allow_redirects=True)
 nosoup = bs4.BeautifulSoup(retrievehtml.text, features="lxml")
+print('\n[+]\tScraping ' + bcolors.OKGREEN + url + bcolors.ENDC + ' to find ISM XML file')
 gethref = (nosoup.find(href=re.compile(".xml")))
 xmlurl = gethref.get('href')
 filename = xmlurl.split("%")
 month = filename[7]
 year = filename[8]
 
-print('\nDownloading the ISM XML File from ' + bcolors.OKGREEN + url + bcolors.ENDC + '.')
+# Retrieve xml file from CGA. 
+print('[+]\tDownloading the ISM XML File from ' + bcolors.OKGREEN + url + bcolors.ENDC)
 retrievexml = requests.get(xmlurl, allow_redirects=True)
 if '200' in str(retrievexml):
-  print(bcolors.OKGREEN +  month[2:] + ' ' + year[2:] + ' ' + 'ISM.xml ' + bcolors.ENDC + 'downloaded successfully.')
+  print('[+]\tSucessfully downloaded the ' + bcolors.OKGREEN +  month[2:] + ' ' + year[2:] + ' ' + 'ISM.xml ' + bcolors.ENDC)
 else:
     print('ISM XML file failed to download')
     exit()
 open(month[2:] + year[2:] + 'ISM.xml', 'wb').write(retrievexml.content)
 
-print('Analysing the ' + bcolors.OKGREEN + month[2:] + ' ' + year[2:] + ' ' + 'ISM' + bcolors.ENDC + '\n')
-
+print('[+]\tAnalysing the ' + bcolors.OKGREEN + month[2:] + ' ' + year[2:] + ' ' + 'ISM' + bcolors.ENDC + '\n')
 tree = ET.parse('./' + month[2:] + year[2:] + 'ISM.xml')
 root = tree.getroot()
 
