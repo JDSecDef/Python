@@ -1,5 +1,5 @@
 # Add top 5 most revised controls. 
-# Add the revision number to identify if control is new or updated. 
+# Sort new and revised controls by date. 
 
 import requests
 import xml.etree.ElementTree as ET
@@ -28,7 +28,8 @@ uniquesecret      = 0
 secretcontrols    = 0
 uniquetopsecret   = 0
 topsecretcontrols = 0
-datelist          = []
+revisedcontrol    = []
+newcontrol        = []
 
 # Scrape CGA ISM page to get XML file.  
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
@@ -55,12 +56,19 @@ print('[+]\tAnalysing the ' + bcolors.OKGREEN + month[2:] + ' ' + year[2:] + ' '
 tree = ET.parse('./' + month[2:] + year[2:] + 'ISM.xml')
 root = tree.getroot()
 
+# Identify new controls and revised controls in the ISM. 
 for control in root.findall('Control'):
-  datelist.append(control.find('Updated').text)
+  if int(control.find('Revision').text) >=1:
+    revisedcontrol.append(control.find('Updated').text)
+  else:
+    newcontrol.append(control.find('Updated').text)
 
-datecount = Counter(datelist)
-for key, value in datecount.items():
-  print(bcolors.OKRED + str(value) + bcolors.ENDC + ' controls were updated in ' + str(key))
+newcontrolcount = Counter(newcontrol)
+revisedcontrolcount = Counter(revisedcontrol)
+
+for key, value in zip(newcontrolcount.items(), (revisedcontrolcount.items())):
+  print('There were ' + bcolors.OKRED + str(key[1]) + bcolors.ENDC + ' new controls and ' + bcolors.OKRED + str(value[1]) + bcolors.ENDC \
+    + ' updated controls in ' + str(key[0]))
 
 for control in root.findall('Control'):
   official = control.find('OFFICIAL').text
