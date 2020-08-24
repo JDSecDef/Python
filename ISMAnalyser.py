@@ -1,5 +1,6 @@
 # Add top 5 most revised controls. 
 # Sort new and revised controls by date. 
+# Ensure new and revised control dates align.
 
 import requests
 import xml.etree.ElementTree as ET
@@ -30,6 +31,7 @@ uniquetopsecret   = 0
 topsecretcontrols = 0
 revisedcontrol    = []
 newcontrol        = []
+controlnumber     = []
 
 # Scrape CGA ISM page to get XML file.  
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
@@ -45,6 +47,8 @@ year = filename[8]
 # Retrieve xml file from CGA. 
 print('[+]\tDownloading the ISM XML File from ' + bcolors.OKGREEN + url + bcolors.ENDC)
 retrievexml = requests.get(xmlurl, allow_redirects=True)
+
+# Check if xml file downloaded successfully.
 if '200' in str(retrievexml):
   print('[+]\tSucessfully downloaded the ' + bcolors.OKGREEN +  month[2:] + ' ' + year[2:] + ' ' + 'ISM.xml ' + bcolors.ENDC)
 else:
@@ -58,17 +62,19 @@ root = tree.getroot()
 
 # Identify new controls and revised controls in the ISM. 
 for control in root.findall('Control'):
-  if int(control.find('Revision').text) >=1:
-    revisedcontrol.append(control.find('Updated').text)
-  else:
+  if int(control.find('Revision').text) ==0:
     newcontrol.append(control.find('Updated').text)
-
+  else:
+    revisedcontrol.append(control.find('Updated').text)
+  if control.find('Updated').text =='Aug-20' and int(control.find('Revision').text) >=1:
+    controlnumber.append(control.find('Identifier').text)
+    
 newcontrolcount = Counter(newcontrol)
 revisedcontrolcount = Counter(revisedcontrol)
 
 for key, value in zip(newcontrolcount.items(), (revisedcontrolcount.items())):
-  print('There were ' + bcolors.OKRED + str(key[1]) + bcolors.ENDC + ' new controls and ' + bcolors.OKRED + str(value[1]) + bcolors.ENDC \
-    + ' updated controls in ' + str(key[0]))
+  print('There are ' + bcolors.OKRED + str(key[1]) + bcolors.ENDC + ' new controls in the ' + bcolors.OKRED + str(key[0]) + ' ISM' + bcolors.ENDC)
+  print('There are ' + bcolors.OKRED + str(value[1]) + bcolors.ENDC + ' updated controls in the ' + bcolors.OKRED + str(value[0]) + ' ISM' + bcolors.ENDC)
 
 for control in root.findall('Control'):
   official = control.find('OFFICIAL').text
