@@ -2,7 +2,6 @@
 # Sort new and revised controls by date. 
 # Ensure new and revised control dates align.
 # Add ISM chapter headings. 
-# testTAGDS
 
 import requests
 import xml.etree.ElementTree as ET
@@ -39,13 +38,6 @@ controlnumber     = []
 # Scrape CGA ISM page to get XML file.  
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
 retrievehtml = requests.get(url, allow_redirects=True)
-    print('ISM XML file failed to download')
-    exit()
-open(month[2:] + year[2:] + 'ISM.xml', 'wb').write(retrievexml.content)
-
-print('[+]\tAnalysing the ' + bcolors.OKGREEN + month[2:] + ' ' + year[2:] + ' ' + 'ISM' + bcolors.ENDC + '\n')
-tree = ET.parse('./' + month[2:] + year[2:] + 'ISM.xml')
-root = tree.getroot()
 
 nosoup = bs4.BeautifulSoup(retrievehtml.text, features="lxml")
 print('\n[+]\tScraping ' + bcolors.OKGREEN + url + bcolors.ENDC + ' to find ISM XML file')
@@ -54,14 +46,6 @@ xmlurl = gethref.get('href')
 filename = xmlurl.split("%")
 month = filename[7]
 year = filename[8]
-
-    print('ISM XML file failed to download')
-    exit()
-open(month[2:] + year[2:] + 'ISM.xml', 'wb').write(retrievexml.content)
-
-print('[+]\tAnalysing the ' + bcolors.OKGREEN + month[2:] + ' ' + year[2:] + ' ' + 'ISM' + bcolors.ENDC + '\n')
-tree = ET.parse('./' + month[2:] + year[2:] + 'ISM.xml')
-root = tree.getroot()
 
 # Retrieve xml file from CGA. 
 print('[+]\tDownloading the ISM XML File from ' + bcolors.OKGREEN + url + bcolors.ENDC)
