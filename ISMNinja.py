@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter
 from datetime import date
+import json
 
 class bcolors:
     HEADER = '\033[95m'
@@ -23,18 +24,22 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-totalcontrols     = 0
-uniqueofficial    = 0
-officialcontrols  = 0
-uniqueprotected   = 0
-protectedcontrols = 0
-uniquesecret      = 0
-secretcontrols    = 0
-uniquetopsecret   = 0
-topsecretcontrols = 0
-updatedcontrol    = []
-newcontrol        = []
-controlnumber     = []
+totalcontrols             = 0
+uniqueofficial            = 0
+officialcontrols          = 0
+uniqueprotected           = 0
+protectedcontrols         = 0
+uniquesecret              = 0
+secretcontrols            = 0
+uniquetopsecret           = 0
+topsecretcontrols         = 0
+newcontrol                = []
+newcontrolnumber          = []
+newcontroldetails         = {}
+updatedcontrol            = []
+updatedcontrolnumber      = []
+updatedcontroldetails     = {}
+outfile                   = open('./output.txt', 'w')
 
 # Get date and assign month and year to variables.
 currentdate = date.today()
@@ -94,14 +99,35 @@ print('[+]\tAnalysing the ' + bcolors.OKGREEN +  currentmonth + currentyear + 'I
 tree = ET.parse('./' + currentmonth + currentyear + 'ISM.xml')
 root = tree.getroot()
 
-# Identify new controls and updated controls in the ISM. 
+# Identify new controls in the ISM and add them to the newcontrol variable. 
+# For identified controls, scrape all of the control details and add to the newcontroldetails variable.
 for control in root.findall('Control'):
   if int(control.find('Revision').text) == 0 and control.find('Updated').text == currentmonth[0:3] + '-' + currentyear[0:2]:
     newcontrol.append(control.find('Updated').text)
+    newcontrolnumber.append(control.find('Identifier').text)
+    for child in root.findall('Control'):
+      for number in newcontrolnumber:
+        if number == (child.find('Identifier').text):
+          if number not in newcontroldetails:
+            newcontroldetails[number] = []
+            newcontroldetails[number].append({'Guideline':child.find('Guideline').text, 'Section':child.find('Section').text, 'Topic':child.find('Topic').text,
+            'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
+            'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
+# Identifiy updated controls and add them to the updated control variable.
+# For identified controls, scrape all of the control and add to the updatedcontroldetails variable.
 for control in root.findall('Control'):
   if int(control.find('Revision').text) != 0 and control.find('Updated').text == currentmonth[0:3] + '-' + currentyear[0:2]:
     updatedcontrol.append(control.find('Updated').text)
+    updatedcontrolnumber.append(control.find('Identifier').text)
+    for child in root.findall('Control'):
+      for number in updatedcontrolnumber:
+        if number == (child.find('Identifier').text):
+          if number not in updatedcontroldetails:
+            updatedcontroldetails[number] = []
+            updatedcontroldetails[number].append({'Guideline':child.find('Guideline').text, 'Section':child.find('Section').text, 'Topic':child.find('Topic').text,
+            'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
+            'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
 # Count new and updated controls in the latest ISM.     
 newcontrolcount = Counter(newcontrol)
@@ -120,11 +146,6 @@ if bool(updatedcontrolcount) == True:
     print("There are " + bcolors.OKRED + str(updatedcontrolcount[i]) + bcolors.ENDC + " updated controls in the " + currentmonth + ' ' + currentyear + " ISM.")
 else:
   print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' controls updated in the ' + currentmonth + ' ' + currentyear + ' ISM.')
-
-# This is not working properly.
-#for key, value in zip(newcontrolcount.items(), (revisedcontrolcount.items())):
- # print('There are ' + bcolors.OKRED + str(key[1]) + bcolors.ENDC + ' new controls in the ' + bcolors.OKRED + str(key[0]) + ' ISM' + bcolors.ENDC)
-  #print('There are ' + bcolors.OKRED + str(value[1]) + bcolors.ENDC + ' updated controls in the ' + bcolors.OKRED + str(value[0]) + ' ISM' + bcolors.ENDC)
 
 for control in root.findall('Control'):
   official = control.find('OFFICIAL').text
@@ -158,3 +179,5 @@ print('There are ' + bcolors.OKRED + str(secretcontrols) + bcolors.ENDC + ' SECR
 print('There are ' + bcolors.OKRED + str(uniquetopsecret) + bcolors.ENDC + ' unique TOP_SECRET controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
 print('There are ' + bcolors.OKRED + str(topsecretcontrols) + bcolors.ENDC + ' TOP SECRET Controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
 print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + currentmonth + ' '  + currentyear + ' ISM')
+
+json.dump(updatedcontroldetails, outfile)
