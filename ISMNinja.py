@@ -39,12 +39,12 @@ newcontroldetails         = {}
 updatedcontrol            = []
 updatedcontrolnumber      = []
 updatedcontroldetails     = {}
-outfile                   = open('./output.txt', 'w')
 
 # Get date and assign month and year to variables.
 currentdate = date.today()
 currentmonth= currentdate.strftime("%B")
 currentyear = currentdate.strftime("%Y")
+outfile = open('./' + currentmonth + currentyear + 'updatedcontrols.txt', 'w')
 
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
 retrievehtml = requests.get(url, allow_redirects=True)
@@ -129,7 +129,6 @@ for control in root.findall('Control'):
             'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
             'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
-# Count new and updated controls in the latest ISM.     
 newcontrolcount = Counter(newcontrol)
 updatedcontrolcount = Counter(updatedcontrol)
 
