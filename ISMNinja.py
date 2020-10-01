@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter
 from datetime import date
+from dateutil.relativedelta import relativedelta
 import json
 
 class bcolors:
@@ -44,6 +45,8 @@ updatedcontroldetails     = {}
 currentdate = date.today()
 currentmonth= currentdate.strftime("%B")
 currentyear = currentdate.strftime("%Y")
+getlastmonth = date.today() -relativedelta(months=1)
+lastmonth = format(getlastmonth, '%B')
 outfile = open('./' + currentmonth + currentyear + 'updatedcontrols.txt', 'w')
 
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
@@ -54,6 +57,9 @@ print('\n[+]\tChecking if ' + bcolors.OKGREEN + currentmonth + currentyear + 'IS
 if os.path.isfile('./' + currentmonth + currentyear + 'ISM.xml'):
   print('[+]\tLocated ' + bcolors.OKGREEN + currentmonth + currentyear + 'ISM.xml' + bcolors.ENDC + ' in current directory.')
   xmlexists = True
+#elif os.path.isfile('./' + lastmonth + currentyear + 'ISM.xml'):
+ #     print('[+]\tLocated ' + bcolors.OKGREEN + lastmonth + currentyear + 'ISM.xml' + bcolors.ENDC + ' in current directory.')
+  #    xmlexists = True  
 else:
     xmlexists = False
     print('[+]\tISM XML file not found!')
