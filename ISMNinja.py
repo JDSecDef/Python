@@ -40,6 +40,7 @@ newcontroldetails         = {}
 updatedcontrol            = []
 updatedcontrolnumber      = []
 updatedcontroldetails     = {}
+outfile                   = ('./test.txt', 'wb')
 
 # Get date and assign month and year to variables.
 currentdate = date.today()
@@ -47,62 +48,48 @@ currentmonth= currentdate.strftime("%B")
 currentyear = currentdate.strftime("%Y")
 getlastmonth = date.today() -relativedelta(months=1)
 lastmonth = format(getlastmonth, '%B')
-outfile = open('./' + currentmonth + currentyear + 'updatedcontrols.txt', 'w')
 
 url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
 retrievehtml = requests.get(url, allow_redirects=True)
 nosoup = bs4.BeautifulSoup(retrievehtml.text, features="lxml")
 
-print('\n[+]\tChecking if ' + bcolors.OKGREEN + currentmonth + currentyear + 'ISM.xml' + bcolors.ENDC + bcolors.ENDC + ' already exists in current directory.')
-if os.path.isfile('./' + currentmonth + currentyear + 'ISM.xml'):
-  print('[+]\tLocated ' + bcolors.OKGREEN + currentmonth + currentyear + 'ISM.xml' + bcolors.ENDC + ' in current directory.')
-  xmlexists = True
-#elif os.path.isfile('./' + lastmonth + currentyear + 'ISM.xml'):
- #     print('[+]\tLocated ' + bcolors.OKGREEN + lastmonth + currentyear + 'ISM.xml' + bcolors.ENDC + ' in current directory.')
-  #    xmlexists = True  
+print('[+]\tScraping ' + bcolors.OKGREEN + url + bcolors.ENDC + ' to find ISM XML file.')
+gethref = (nosoup.find(href=re.compile(".xml")))
+xmlurl = gethref.get('href')
+
+# Retrieve xml file from CGA.
+print('[+]\tDownloading the ISM XML file from ' + bcolors.OKGREEN + url + bcolors.ENDC)
+retrievexml = requests.get(xmlurl, allow_redirects=True)
+if '200' in str(retrievexml):
+  print('[+]\tISM downloaded successfully.')
 else:
-    xmlexists = False
-    print('[+]\tISM XML file not found!')
-    # Scrape CGA ISM page to get XML file.  
-    print('[+]\tScraping ' + bcolors.OKGREEN + url + bcolors.ENDC + ' to find ISM XML file.')
-    gethref = (nosoup.find(href=re.compile(".xml")))
-    xmlurl = gethref.get('href')
+  print('ISM XML file failed to download')
+  exit()
+open('./ISM.xml', 'wb').write(retrievexml.content)
 
-if xmlexists != True:
-  # Retrieve xml file from CGA. 
-  print('[+]\tDownloading the ISM XML file from ' + bcolors.OKGREEN + url + bcolors.ENDC)
-  retrievexml = requests.get(xmlurl, allow_redirects=True)
-  # Check if xml file downloaded successfully.
-  if '200' in str(retrievexml):
-    print('[+]\tSucessfully downloaded the ' + bcolors.OKGREEN +  currentmonth + ' ' + currentyear + ' ' + 'ISM.xml ' + bcolors.ENDC + '.')
+with open('./ISM.xml') as f:
+  if currentmonth in f.read():
+    os.rename (r'./ISM.xml',r'./' + currentmonth + currentyear + 'ISM.xml')
+    outfile = open('./' + currentmonth + currentyear + 'ISMchange.txt', 'w')
+    currentmonthism = True
   else:
-    print('ISM XML file failed to download')
-    exit()
-  open(currentmonth + currentyear + 'ISM.xml', 'wb').write(retrievexml.content)
+    currentmonthism = False
 
-print('[+]\tChecking if ' + bcolors.OKGREEN + currentmonth + currentyear + 'ISM.pdf' + bcolors.ENDC + bcolors.ENDC + ' already exists in current directory.')
-if os.path.isfile('./' + currentmonth + currentyear + 'ISM.pdf'):
-  print('[+]\tLocated ' + bcolors.OKGREEN + currentmonth + currentyear + 'ISM.pdf' + bcolors.ENDC + ' in current directory.')
-  pdfexists = True
-else:
-    pdfexists = False
-    print('[+]\tISM PDF file not found!')
-    # Scrape CGA ISM page to find ISM pdf file.
-    print('[+]\tScraping ' + bcolors.OKGREEN + url + bcolors.ENDC + ' to find ISM PDF file.')
-    getpdf = (nosoup.find(href=re.compile(".pdf")))
-    pdfurl = getpdf.get('href')
-
-if pdfexists != True:
-  retrievepdf = requests.get(pdfurl, allow_redirects=True)
-  if '200' in str(retrievepdf):
-    print('[+]\tSucessfully downloaded the ' + bcolors.OKGREEN +  currentmonth + ' ' + currentyear + ' ' + 'ISM.pdf ' + bcolors.ENDC + '.')
+with open('./ISM.xml') as f:
+  if lastmonth in f.read():
+    os.rename(r'./ISM.xml',r'./' + lastmonth + currentyear + 'ISM.xml')
+    outfile = open('./' + lastmonth + currentyear + 'ISMchange.txt', 'w')
+    lastmonthism = True
   else:
-    print('ISM PDF file failed to download')
-    exit()
-  open(currentmonth + currentyear + 'ISM.pdf', 'wb').write(retrievepdf.content)
+    lastmonthism = False
 
-print('[+]\tAnalysing the ' + bcolors.OKGREEN +  currentmonth + currentyear + 'ISM.xml' + bcolors.ENDC + '.' + '\n')
-tree = ET.parse('./' + currentmonth + currentyear + 'ISM.xml')
+if bool(currentmonthism) == True:
+  print('[+]\tAnalysing the ' + bcolors.OKGREEN +  currentmonth + currentyear + 'ISM.xml' + bcolors.ENDC + '.' + '\n')
+  tree = ET.parse('./' + currentmonth + currentyear + 'ISM.xml')
+elif bool(lastmonthism) == True:
+  print('[+]\tAnalysing the ' + bcolors.OKGREEN +  lastmonth + currentyear + 'ISM.xml' + bcolors.ENDC + '.' + '\n')
+  tree = ET.parse('./' + lastmonth + currentyear + 'ISM.xml')
+
 root = tree.getroot()
 
 # Identify new controls in the ISM and add them to the newcontrol variable. 
@@ -123,17 +110,20 @@ for control in root.findall('Control'):
 # Identifiy updated controls and add them to the updated control variable.
 # For identified controls, scrape all of the control and add to the updatedcontroldetails variable.
 for control in root.findall('Control'):
-  if int(control.find('Revision').text) != 0 and control.find('Updated').text == currentmonth[0:3] + '-' + currentyear[0:2]:
-    updatedcontrol.append(control.find('Updated').text)
-    updatedcontrolnumber.append(control.find('Identifier').text)
-    for child in root.findall('Control'):
-      for number in updatedcontrolnumber:
-        if number == (child.find('Identifier').text):
-          if number not in updatedcontroldetails:
-            updatedcontroldetails[number] = []
-            updatedcontroldetails[number].append({'Guideline':child.find('Guideline').text, 'Section':child.find('Section').text, 'Topic':child.find('Topic').text,
-            'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
-            'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
+  if bool(currentmonthism) == True and int(control.find('Revision').text) != 0 and control.find('Updated').text == currentmonth[0:3] + '-' + currentyear[0:2]:
+      updatedcontrol.append(control.find('Updated').text)
+      updatedcontrolnumber.append(control.find('Identifier').text)
+  if bool(lastmonthism) == True and int(control.find('Revision').text) != 0 and control.find('Updated').text == lastmonth[0:3] + '-' + currentyear[0:2]:
+      updatedcontrol.append(control.find('Updated').text)
+      updatedcontrolnumber.append(control.find('Identifier').text)
+      for child in root.findall('Control'):
+        for number in updatedcontrolnumber:
+          if number == (child.find('Identifier').text):
+            if number not in updatedcontroldetails:
+              updatedcontroldetails[number] = []
+              updatedcontroldetails[number].append({'Guideline':child.find('Guideline').text, 'Section':child.find('Section').text, 'Topic':child.find('Topic').text,
+              'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
+              'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
 newcontrolcount = Counter(newcontrol)
 updatedcontrolcount = Counter(updatedcontrol)
