@@ -14,6 +14,7 @@ from collections import Counter
 from datetime import date
 from dateutil.relativedelta import relativedelta
 import json
+import shutil
 
 class bcolors:
     HEADER = '\033[95m'
@@ -66,6 +67,29 @@ else:
   print('ISM XML file failed to download')
   exit()
 open('./ISM.xml', 'wb').write(retrievexml.content)
+
+spliturl = xmlurl.split('%')
+ismmonth = ''.join([i for i in spliturl[7] if not i.isdigit()])
+ismyear = (spliturl[8])
+ismyear = ismyear[2:7]
+ismversion = ismmonth + ismyear + 'ISM.xml'
+oldismversion = currentmonth + currentyear + 'ISM.xml'
+print(oldismversion)
+lastmonthism = lastmonth + currentyear + 'ISM.xml'
+print(lastmonthism)
+
+if os.path.isfile('./' + ismversion):
+  print('ISM Version already downloaded.')
+elif not os.path.isfile('./' + ismversion):
+  print('New ISM Version downloaded.')
+  if os.path.isfile('./' + oldismversion):
+    print('located file')
+    shutil.move('./' + oldismversion, './PreviousISMs/' + oldismversion)
+  elif os.path.isfile('./' + lastmonthism):
+    print('file not found')
+    shutil.move('./' + lastmonthism, './PreviousISMs/' + lastmonthism)
+
+open('./' + ismversion, 'wb').write(retrievexml.content)
 
 with open('./ISM.xml') as f:
   if currentmonth in f.read():
