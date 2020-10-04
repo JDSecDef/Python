@@ -41,7 +41,6 @@ newcontroldetails         = {}
 updatedcontrol            = []
 updatedcontrolnumber      = []
 updatedcontroldetails     = {}
-outfile                   = ('./test.txt', 'wb')
 
 # Get date and assign month and year to variables.
 currentdate = date.today()
@@ -74,9 +73,7 @@ ismyear = (spliturl[8])
 ismyear = ismyear[2:7]
 ismversion = ismmonth + ismyear + 'ISM.xml'
 oldismversion = currentmonth + currentyear + 'ISM.xml'
-print(oldismversion)
 lastmonthism = lastmonth + currentyear + 'ISM.xml'
-print(lastmonthism)
 
 if os.path.isfile('./' + ismversion):
   print('ISM Version already downloaded.')
@@ -91,35 +88,13 @@ elif not os.path.isfile('./' + ismversion):
 
 open('./' + ismversion, 'wb').write(retrievexml.content)
 
-with open('./ISM.xml') as f:
-  if currentmonth in f.read():
-    os.rename (r'./ISM.xml',r'./' + currentmonth + currentyear + 'ISM.xml')
-    outfile = open('./' + currentmonth + currentyear + 'ISMchange.txt', 'w')
-    currentmonthism = True
-  else:
-    currentmonthism = False
-
-with open('./ISM.xml') as f:
-  if lastmonth in f.read():
-    os.rename(r'./ISM.xml',r'./' + lastmonth + currentyear + 'ISM.xml')
-    outfile = open('./' + lastmonth + currentyear + 'ISMchange.txt', 'w')
-    lastmonthism = True
-  else:
-    lastmonthism = False
-
-if bool(currentmonthism) == True:
-  print('[+]\tAnalysing the ' + bcolors.OKGREEN +  currentmonth + currentyear + 'ISM.xml' + bcolors.ENDC + '.' + '\n')
-  tree = ET.parse('./' + currentmonth + currentyear + 'ISM.xml')
-elif bool(lastmonthism) == True:
-  print('[+]\tAnalysing the ' + bcolors.OKGREEN +  lastmonth + currentyear + 'ISM.xml' + bcolors.ENDC + '.' + '\n')
-  tree = ET.parse('./' + lastmonth + currentyear + 'ISM.xml')
-
+tree = ET.parse('./' + ismversion)
 root = tree.getroot()
 
 # Identify new controls in the ISM and add them to the newcontrol variable. 
 # For identified controls, scrape all of the control details and add to the newcontroldetails variable.
 for control in root.findall('Control'):
-  if int(control.find('Revision').text) == 0 and control.find('Updated').text == currentmonth[0:3] + '-' + currentyear[0:2]:
+  if int(control.find('Revision').text) == 0 and control.find('Updated').text == ismmonth[0:3] + '-' + ismyear[0:2]:
     newcontrol.append(control.find('Updated').text)
     newcontrolnumber.append(control.find('Identifier').text)
     for child in root.findall('Control'):
@@ -134,10 +109,7 @@ for control in root.findall('Control'):
 # Identifiy updated controls and add them to the updated control variable.
 # For identified controls, scrape all of the control and add to the updatedcontroldetails variable.
 for control in root.findall('Control'):
-  if bool(currentmonthism) == True and int(control.find('Revision').text) != 0 and control.find('Updated').text == currentmonth[0:3] + '-' + currentyear[0:2]:
-      updatedcontrol.append(control.find('Updated').text)
-      updatedcontrolnumber.append(control.find('Identifier').text)
-  if bool(lastmonthism) == True and int(control.find('Revision').text) != 0 and control.find('Updated').text == lastmonth[0:3] + '-' + currentyear[0:2]:
+  if int(control.find('Revision').text) != 0 and control.find('Updated').text == ismmonth[0:3] + '-' + ismyear[0:2]:
       updatedcontrol.append(control.find('Updated').text)
       updatedcontrolnumber.append(control.find('Identifier').text)
       for child in root.findall('Control'):
@@ -155,16 +127,16 @@ updatedcontrolcount = Counter(updatedcontrol)
 # Print number of new controls. 
 if bool(newcontrolcount) == True:
   for i in newcontrolcount:
-    print("There are " + bcolors.OKRED + str(newcontrolcount[i]) + bcolors.ENDC + " new controls in the " + currentmonth + ' ' + currentyear + " ISM.")
+    print("There are " + bcolors.OKRED + str(newcontrolcount[i]) + bcolors.ENDC + " new controls in the " + ismtmonth + ' ' + ismyear + " ISM.")
 else: 
-  print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' new controls in the ' + currentmonth + ' ' + currentyear + ' ISM.')
+  print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' new controls in the ' + ismmonth + ' ' + ismyear + ' ISM.')
 
 # Print number of updated controls.
 if bool(updatedcontrolcount) == True:
   for i in updatedcontrolcount:
-    print("There are " + bcolors.OKRED + str(updatedcontrolcount[i]) + bcolors.ENDC + " updated controls in the " + currentmonth + ' ' + currentyear + " ISM.")
+    print("There are " + bcolors.OKRED + str(updatedcontrolcount[i]) + bcolors.ENDC + " updated controls in the " + ismmonth + ' ' + ismyear + " ISM.")
 else:
-  print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' controls updated in the ' + currentmonth + ' ' + currentyear + ' ISM.')
+  print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' controls updated in the ' + ismmonth + ' ' + ismyear + ' ISM.')
 
 for control in root.findall('Control'):
   official = control.find('OFFICIAL').text
@@ -189,14 +161,15 @@ for control in root.findall('Control'):
     topsecretcontrols+=1
 totalcontrols = sum(1 for entry in root.iter('Identifier'))
 
-print('\nThere are ' + bcolors.OKRED + str(uniqueofficial) + bcolors.ENDC + ' unique OFFICIAL controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(officialcontrols) + bcolors.ENDC + ' OFFICIAL Controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(uniqueprotected) + bcolors.ENDC + ' unique PROTECTED controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(protectedcontrols) + bcolors.ENDC + ' PROTECTED Controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(uniquesecret) + bcolors.ENDC + ' unique SECRET controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(secretcontrols) + bcolors.ENDC + ' SECRET Controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(uniquetopsecret) + bcolors.ENDC + ' unique TOP_SECRET controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(topsecretcontrols) + bcolors.ENDC + ' TOP SECRET Controls in the ' + currentmonth + ' '  + currentyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + currentmonth + ' '  + currentyear + ' ISM')
+print('\nThere are ' + bcolors.OKRED + str(uniqueofficial) + bcolors.ENDC + ' unique OFFICIAL controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(officialcontrols) + bcolors.ENDC + ' OFFICIAL Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(uniqueprotected) + bcolors.ENDC + ' unique PROTECTED controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(protectedcontrols) + bcolors.ENDC + ' PROTECTED Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(uniquesecret) + bcolors.ENDC + ' unique SECRET controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(secretcontrols) + bcolors.ENDC + ' SECRET Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(uniquetopsecret) + bcolors.ENDC + ' unique TOP_SECRET controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(topsecretcontrols) + bcolors.ENDC + ' TOP SECRET Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM')
 
-json.dump(updatedcontroldetails, outfile)
+with open('./' + ismmonth + ismyear + 'controlchanges.txt', 'w') as outfile:
+    json.dump(updatedcontroldetails, outfile)
