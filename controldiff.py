@@ -4,11 +4,11 @@ import json
 import xml.etree.ElementTree as ET
 import difflib
 
-updatefile = open('./dataoutput/Sep2020updated.txt')
+updatefile = open('./dataoutput/September2020updatedcontrols.txt')
 
-diff3 = open('./dataoutput/controldiff.txt', 'w')
+diff3 = open('./dataoutput/controldiff1.txt', 'w')
 
-tree = ET.parse('./August2020ISM.xml')
+tree = ET.parse('./PreviousISMs/August2020ISM.xml')
 root = tree.getroot()
 
 extract = []
@@ -17,6 +17,7 @@ updatedcontroldetails = {}
 
 updatedcontrols = updatefile.read()
 extract = re.findall(r'\b\d{4}\b', updatedcontrols)
+#print(extract)
 
 for control in root.findall('Control'):
     for i in extract:
@@ -26,11 +27,23 @@ for control in root.findall('Control'):
             'Revision':control.find('Revision').text, 'Updated':control.find('Updated').text, 'OFFICIAL':control.find('OFFICIAL').text, 'PROTECTED':control.find('PROTECTED').text,
             'SECRET':control.find('SECRET').text, 'TOP_SECRET':control.find('TOP_SECRET').text, 'Description':control.find('Description').text})
 
-for k, v in sorted(updatedcontroldetails.items()):
-    print(k)
+sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
+
+#print(updatedcontroldetails)
+#for k, v in sorted(updatedcontroldetails.items()):
+ #   print(k, v)
+
+sortupdatedcontroldetails = sorted(updatedcontroldetails.items())\
+
+with open('./dataoutput/test445.txt', 'w') as outfile:
+    json.dump(sortupdatedcontrolsdetails, outfile)
+
+updatefile2 = open('./dataoutput/test445.txt')
+oldcontrols = updatefile2.read()
 
 sub = re.sub(r'[\[\]\"\,\{\}\'\']', '', str(updatedcontrols))
-sub2 = re.sub(r'[\[\]\"\,\{\}\'\']', '', str(updatedcontroldetails))
+sub2 = re.sub(r'[\[\]\"\,\{\}\'\']', '', str(oldcontrols))
+
 match = re.split(r'[##]', sub)
 match2 = re.split(r'[##]', sub2)
 while '' in match:
@@ -41,7 +54,6 @@ while '' in match2:
 
 testing = ('\n'.join(match2))
 testing2 = ('\n'.join(match))
-
 
 def readable_whitespace(line):
     end = len(line.rstrip('\r'))

@@ -116,11 +116,12 @@ for control in root.findall('Control'):
         for number in updatedcontrolnumber:
           if number == (child.find('Identifier').text):
             if number not in updatedcontroldetails:
-              updatedcontroldetails[number] = []
-              updatedcontroldetails[number].append({'Guideline':child.find('Guideline').text, 'Section':child.find('Section').text, 'Topic':child.find('Topic').text,
+              updatedcontroldetails['##' + number] = []
+              updatedcontroldetails['##' + number].append({'Guideline':child.find('Guideline').text, 'Section':child.find('Section').text, 'Topic':child.find('Topic').text,
               'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
               'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
+sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
 newcontrolcount = Counter(newcontrol)
 updatedcontrolcount = Counter(updatedcontrol)
 
@@ -171,5 +172,5 @@ print('There are ' + bcolors.OKRED + str(uniquetopsecret) + bcolors.ENDC + ' uni
 print('There are ' + bcolors.OKRED + str(topsecretcontrols) + bcolors.ENDC + ' TOP SECRET Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
 print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM')
 
-with open('./' + ismmonth + ismyear + 'controlchanges.txt', 'w') as outfile:
-    json.dump(updatedcontroldetails, outfile)
+with open('./dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
+    json.dump(sortupdatedcontrolsdetails, outfile)
