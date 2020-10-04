@@ -128,7 +128,7 @@ updatedcontrolcount = Counter(updatedcontrol)
 # Print number of new controls. 
 if bool(newcontrolcount) == True:
   for i in newcontrolcount:
-    print("There are " + bcolors.OKRED + str(newcontrolcount[i]) + bcolors.ENDC + " new controls in the " + ismtmonth + ' ' + ismyear + " ISM.")
+    print("There are " + bcolors.OKRED + str(newcontrolcount[i]) + bcolors.ENDC + " new controls in the " + ismmonth + ' ' + ismyear + " ISM.")
 else: 
   print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' new controls in the ' + ismmonth + ' ' + ismyear + ' ISM.')
 
