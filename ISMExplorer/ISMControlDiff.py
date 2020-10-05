@@ -13,11 +13,11 @@ currentyear = currentdate.strftime("%Y")
 getlastmonth = date.today() -relativedelta(months=1)
 lastmonth = format(getlastmonth, '%B')
 
-updatedcontrolsfile = open('./dataoutput/September2020updatedcontrols.txt')
+updatedcontrolsfile = open('./ISMExplorer/dataoutput/September2020updatedcontrols.txt')
 
-diffoutfile = open('./dataoutput/' + lastmonth + currentyear + 'controldiff.txt', 'w')
+diffoutfile = open('./ISMExplorer/dataoutput/' + lastmonth + currentyear + 'controldiff.txt', 'w')
 
-tree = ET.parse('./PreviousISMs/August2020ISM.xml')
+tree = ET.parse('./ISMExplorer/PreviousISMs/August2020ISM.xml')
 root = tree.getroot()
 
 extractcontrols = []
@@ -41,13 +41,13 @@ for control in root.findall('Control'):
 sortpriorcontrolsdetails = sorted(priorcontroldetails.items())
 
 # Write the matching prior controls to file. 
-with open('./dataoutput/priorcontrols.txt', 'w') as outfile:
+with open('./ISMExplorer/dataoutput/priorcontrols.txt', 'w') as outfile:
     json.dump(sortpriorcontrolsdetails, outfile)
 
 # Open the updated controls and prior controls and read to lines. 
-with open('./dataoutput/September2020updatedcontrols.txt') as ff:
+with open('./ISMExplorer/dataoutput/September2020updatedcontrols.txt') as ff:
     updatedcontrolstolines = ff.readlines()
-with open('./dataoutput/priorcontrols.txt') as tf:
+with open('./ISMExplorer/dataoutput/priorcontrols.txt') as tf:
     priorcontrolstolines = tf.readlines()
 
 # Perform a number a substitute and replace actions on the updated ISM controls to prepare for diff. 
