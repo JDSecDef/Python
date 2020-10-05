@@ -172,5 +172,5 @@ print('There are ' + bcolors.OKRED + str(uniquetopsecret) + bcolors.ENDC + ' uni
 print('There are ' + bcolors.OKRED + str(topsecretcontrols) + bcolors.ENDC + ' TOP SECRET Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
 print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM')
 
-with open('./dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
+with open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
     json.dump(sortupdatedcontrolsdetails, outfile)
