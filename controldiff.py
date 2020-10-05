@@ -1,72 +1,72 @@
+# Python script to get the difference between ISM controls. 
 
 import re
 import json
 import xml.etree.ElementTree as ET
 import difflib
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
-updatefile = open('./dataoutput/September2020updatedcontrols.txt')
+currentdate = date.today()
+currentmonth= currentdate.strftime("%B")
+currentyear = currentdate.strftime("%Y")
+getlastmonth = date.today() -relativedelta(months=1)
+lastmonth = format(getlastmonth, '%B')
 
-diff3 = open('./dataoutput/controldiff1.txt', 'w')
+updatedcontrolsfile = open('./dataoutput/September2020updatedcontrols.txt')
+
+diffoutfile = open('./dataoutput/' + lastmonth + currentyear + 'controldiff.txt', 'w')
 
 tree = ET.parse('./PreviousISMs/August2020ISM.xml')
 root = tree.getroot()
 
-extract = []
+extractcontrols = []
 newcontrol = []
-updatedcontroldetails = {}
+priorcontroldetails = {}
 
-updatedcontrols = updatefile.read()
-extract = re.findall(r'\b\d{4}\b', updatedcontrols)
-#print(extract)
 
+updatedcontrols = updatedcontrolsfile.read()
+extractcontrols = re.findall(r'\b\d{4}\b', updatedcontrols)
+
+# Using the updated controls find their previous version in the n-1 ISM. 
 for control in root.findall('Control'):
-    for i in extract:
+    for i in extractcontrols:
         if i == (control.find('Identifier').text):
-            updatedcontroldetails['##' + i] = []
-            updatedcontroldetails['##' + i].append({'Guideline':control.find('Guideline').text, 'Section':control.find('Section').text, 'Topic':control.find('Topic').text,
+            priorcontroldetails['##' + i] = []
+            priorcontroldetails['##' + i].append({'Guideline':control.find('Guideline').text, 'Section':control.find('Section').text, 'Topic':control.find('Topic').text,
             'Revision':control.find('Revision').text, 'Updated':control.find('Updated').text, 'OFFICIAL':control.find('OFFICIAL').text, 'PROTECTED':control.find('PROTECTED').text,
             'SECRET':control.find('SECRET').text, 'TOP_SECRET':control.find('TOP_SECRET').text, 'Description':control.find('Description').text})
 
-sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
+# Sort the identified prior controls to prepare for the diff. 
+sortpriorcontrolsdetails = sorted(priorcontroldetails.items())
 
-#print(updatedcontroldetails)
-#for k, v in sorted(updatedcontroldetails.items()):
- #   print(k, v)
+# Write the matching prior controls to file. 
+with open('./dataoutput/priorcontrols.txt', 'w') as outfile:
+    json.dump(sortpriorcontrolsdetails, outfile)
 
-sortupdatedcontroldetails = sorted(updatedcontroldetails.items())\
+# Open the updated controls and prior controls and read to lines. 
+with open('./dataoutput/September2020updatedcontrols.txt') as ff:
+    updatedcontrolstolines = ff.readlines()
+with open('./dataoutput/priorcontrols.txt') as tf:
+    priorcontrolstolines = tf.readlines()
 
-with open('./dataoutput/test445.txt', 'w') as outfile:
-    json.dump(sortupdatedcontrolsdetails, outfile)
+# Perform a number a substitute and replace actions on the updated ISM controls to prepare for diff. 
+subupdatedcontrols = re.sub(r'[\[\]\,\{\'\']', '', str(updatedcontrolstolines))
+updatedcontrolsreplace = (subupdatedcontrols.replace('##', ''))
+updatedcontrolsreplace2 = (updatedcontrolsreplace.replace('"}', ' \n'))
+updatedcontrolsreplace3 = (updatedcontrolsreplace2.replace('"', ''))
 
-updatefile2 = open('./dataoutput/test445.txt')
-oldcontrols = updatefile2.read()
+# Perform a number a substitute and replace actions on the prior ISM controls to prepare for diff. 
+subpriorcontrols = re.sub(r'[\[\]\,\{\'\']', '', str(priorcontrolstolines))
+priorcontrolsreplace = (subpriorcontrols.replace('##', ''))
+priorcontrolsreplace2 = (priorcontrolsreplace.replace('"}', ' \n'))
+priorcontrolsreplace3 = (priorcontrolsreplace2.replace('"', ''))
 
-sub = re.sub(r'[\[\]\"\,\{\}\'\']', '', str(updatedcontrols))
-sub2 = re.sub(r'[\[\]\"\,\{\}\'\']', '', str(oldcontrols))
+# Split the lines of the prior and updated controls strings. 
+updatedcontrolssplit = (updatedcontrolsreplace3.splitlines(keepends=True))
+priorcontrolssplit = (priorcontrolsreplace3.splitlines(keepends=True))
 
-match = re.split(r'[##]', sub)
-match2 = re.split(r'[##]', sub2)
-while '' in match:
-    match.remove('')
-
-while '' in match2:
-    match2.remove('')
-
-testing = ('\n'.join(match2))
-testing2 = ('\n'.join(match))
-
-def readable_whitespace(line):
-    end = len(line.rstrip('\r'))
-    return line[:end] + repr(line[end:])[1:-1]
-
-# Two strings are expected as input
-#def print_diff(testing, testing2):
-d = difflib.Differ()
-testing = testing.splitlines(True)
-testing2 = testing2.splitlines(True)
-testing = [readable_whitespace(line) for line in testing]
-testing2 = [readable_whitespace(line) for line in testing2]
-
-result = list(d.compare(testing, testing2))
-result2 = ('\n'.join(result))
-diff3.write(result2.replace('?', ' '))
+# Perform the diff action and write to file. 
+diffresult = difflib.ndiff(priorcontrolssplit, updatedcontrolssplit)
+diffjoin = (''.join(diffresult))
+diffoutfile.writelines(diffjoin)
