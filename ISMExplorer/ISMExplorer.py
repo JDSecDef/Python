@@ -68,9 +68,11 @@ else:
 open('./ISM.xml', 'wb').write(retrievexml.content)
 
 spliturl = xmlurl.split('%')
+getdate = spliturl[7]
 ismmonth = ''.join([i for i in spliturl[7] if not i.isdigit()])
 ismyear = (spliturl[8])
 ismyear = ismyear[2:7]
+ismreleasedate = getdate[0:2] + ' ' + ismmonth + ' ' + ismyear
 ismversion = ismmonth + ismyear + 'ISM.xml'
 oldismversion = currentmonth + currentyear + 'ISM.xml'
 lastmonthism = lastmonth + currentyear + 'ISM.xml'
@@ -125,6 +127,8 @@ sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
 newcontrolcount = Counter(newcontrol)
 updatedcontrolcount = Counter(updatedcontrol)
 
+totalcontrols = sum(1 for entry in root.iter('Identifier'))
+
 # Print number of new controls. 
 if bool(newcontrolcount) == True:
   for i in newcontrolcount:
@@ -139,38 +143,18 @@ if bool(updatedcontrolcount) == True:
 else:
   print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' controls updated in the ' + ismmonth + ' ' + ismyear + ' ISM.')
 
-for control in root.findall('Control'):
-  official = control.find('OFFICIAL').text
-  protected = control.find('PROTECTED').text
-  secret = control.find('SECRET').text
-  topsecret = control.find('TOP_SECRET').text
-  if official == 'Yes' and protected == 'No' and secret == 'No' and topsecret == 'No':
-    uniqueofficial+=1
-  if official == 'Yes':
-    officialcontrols+=1
-  if official == 'No' and protected == 'Yes' and secret == 'No' and topsecret == 'No':
-    uniqueprotected+=1
-  if protected == 'Yes':
-    protectedcontrols+=1
-  if official == 'No' and protected == 'No' and secret == 'Yes' and topsecret == 'No':
-    uniquesecret+=1
-  if secret == 'Yes':
-    secretcontrols+=1
-  if official == 'No' and protected == 'No' and secret == 'No' and topsecret == 'Yes':
-    uniquetopsecret+=1
-  if topsecret == 'Yes':
-    topsecretcontrols+=1
-totalcontrols = sum(1 for entry in root.iter('Identifier'))
-
-print('\nThere are ' + bcolors.OKRED + str(uniqueofficial) + bcolors.ENDC + ' unique OFFICIAL controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(officialcontrols) + bcolors.ENDC + ' OFFICIAL Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(uniqueprotected) + bcolors.ENDC + ' unique PROTECTED controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(protectedcontrols) + bcolors.ENDC + ' PROTECTED Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(uniquesecret) + bcolors.ENDC + ' unique SECRET controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(secretcontrols) + bcolors.ENDC + ' SECRET Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(uniquetopsecret) + bcolors.ENDC + ' unique TOP_SECRET controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
-print('There are ' + bcolors.OKRED + str(topsecretcontrols) + bcolors.ENDC + ' TOP SECRET Controls in the ' + ismmonth + ' '  + ismyear + ' ISM')
 print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM')
+
+# Build Report
+reportfile = open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'ISMReport.txt', 'w')
+reportfile.write(ismmonth + ' ' + ismyear + ' ISMExplorer Report\n')
+if newcontrolcount[0] == 0:
+  reportfile.write('There are no new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+else:
+  reportfile.write('There are ' + newcontrolcount[0] + ' in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+for i in updatedcontrolcount:
+  reportfile.write('There are ' + str(updatedcontrolcount[i]) + ' updated controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+#reportfile.write('There are ' + str(totalcontrols) + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM\n')
 
 with open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
     json.dump(sortupdatedcontrolsdetails, outfile)

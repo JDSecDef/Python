@@ -1,4 +1,5 @@
 # Python script to get the difference between ISM controls. 
+# Add in controls that were removed. 
 
 import re
 import json
@@ -70,3 +71,6 @@ priorcontrolssplit = (priorcontrolsreplace3.splitlines(keepends=True))
 diffresult = difflib.ndiff(priorcontrolssplit, updatedcontrolssplit)
 diffjoin = (''.join(diffresult))
 diffoutfile.writelines(diffjoin)
+
+with open('./ISMExplorer/dataoutput/September2020ISMReport.txt', "a") as reportfile:
+    reportfile.write('\n' + diffjoin)
