@@ -8,11 +8,11 @@ import difflib
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-currentdate = date.today()
-currentmonth= currentdate.strftime("%B")
-currentyear = currentdate.strftime("%Y")
-getlastmonth = date.today() -relativedelta(months=1)
-lastmonth = format(getlastmonth, '%B')
+currentdate     = date.today()
+currentmonth    = currentdate.strftime("%B")
+currentyear     = currentdate.strftime("%Y")
+getlastmonth    = date.today() -relativedelta(months=1)
+lastmonth       = format(getlastmonth, '%B')
 
 updatedcontrolsfile = open('./ISMExplorer/dataoutput/September2020updatedcontrols.txt')
 
@@ -24,7 +24,6 @@ root = tree.getroot()
 extractcontrols = []
 newcontrol = []
 priorcontroldetails = {}
-
 
 updatedcontrols = updatedcontrolsfile.read()
 extractcontrols = re.findall(r'\b\d{4}\b', updatedcontrols)

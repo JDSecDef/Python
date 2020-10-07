@@ -41,6 +41,9 @@ newcontroldetails         = {}
 updatedcontrol            = []
 updatedcontrolnumber      = []
 updatedcontroldetails     = {}
+previouscontrols          = []
+latestcontrols            = []
+deletedcontroldetails     = {}
 
 # Get date and assign month and year to variables.
 currentdate = date.today()
@@ -53,19 +56,9 @@ url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
 retrievehtml = requests.get(url, allow_redirects=True)
 nosoup = bs4.BeautifulSoup(retrievehtml.text, features="lxml")
 
-print('[+]\tScraping ' + bcolors.OKGREEN + url + bcolors.ENDC + ' to find ISM XML file.')
+print('[+]\tScraping ' + url + ' to find ISM XML file.')
 gethref = (nosoup.find(href=re.compile(".xml")))
 xmlurl = gethref.get('href')
-
-# Retrieve xml file from CGA.
-print('[+]\tDownloading the ISM XML file from ' + bcolors.OKGREEN + url + bcolors.ENDC)
-retrievexml = requests.get(xmlurl, allow_redirects=True)
-if '200' in str(retrievexml):
-  print('[+]\tISM downloaded successfully.')
-else:
-  print('ISM XML file failed to download')
-  exit()
-open('./ISM.xml', 'wb').write(retrievexml.content)
 
 spliturl = xmlurl.split('%')
 getdate = spliturl[7]
@@ -77,15 +70,25 @@ ismversion = ismmonth + ismyear + 'ISM.xml'
 oldismversion = currentmonth + currentyear + 'ISM.xml'
 lastmonthism = lastmonth + currentyear + 'ISM.xml'
 
+# Retrieve xml file from CGA.
+print('[+]\tDownloading the ' + ismmonth + ' ' + ismyear + ' ISM XML file from ' + url)
+retrievexml = requests.get(xmlurl, allow_redirects=True)
+if '200' in str(retrievexml):
+  print('[+]\t' + ismmonth + ' ' + ismyear + ' ISM downloaded successfully.')
+else:
+  print('ISM XML file failed to download')
+  exit()
+open('./ISM.xml', 'wb').write(retrievexml.content)
+
 if os.path.isfile('./' + ismversion):
-  print('ISM Version already downloaded.')
+  print('[+]\t' + ismmonth + ' ' + ismyear + ' ISM already exists on filesystem.')
 elif not os.path.isfile('./' + ismversion):
-  print('New ISM Version downloaded.')
+  print('[+]\tNew ISM Version identified!')
   if os.path.isfile('./' + oldismversion):
-    print('located file')
+    print('[+]\tlocated previous ISM file. Moving to other folder.')
     shutil.move('./' + oldismversion, './PreviousISMs/' + oldismversion)
   elif os.path.isfile('./' + lastmonthism):
-    print('file not found')
+    print('[+]\tfile not found')
     shutil.move('./' + lastmonthism, './PreviousISMs/' + lastmonthism)
 
 open('./' + ismversion, 'wb').write(retrievexml.content)
@@ -108,6 +111,9 @@ for control in root.findall('Control'):
             'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
             'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
+sortnewcontrolsdetails = sorted(newcontroldetails.items())
+newcontrolcount = Counter(newcontrol)
+
 # Identifiy updated controls and add them to the updated control variable.
 # For identified controls, scrape all of the control and add to the updatedcontroldetails variable.
 for control in root.findall('Control'):
@@ -123,10 +129,44 @@ for control in root.findall('Control'):
               'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
               'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
-sortnewcontrolsdetails = sorted(newcontroldetails.items())
 sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
-newcontrolcount = Counter(newcontrol)
 updatedcontrolcount = Counter(updatedcontrol)
+
+tree = ET.parse('./ISMExplorer/PreviousISMs/August2020ISM.xml')
+root = tree.getroot()
+for control in root.findall('Control'):
+  previouscontrols.append(control.find('Identifier').text)
+
+tree = ET.parse('./ISMExplorer/CurrentISM/September2020ISM.xml')
+root = tree.getroot()
+
+for control in root.findall('Control'):
+  latestcontrols.append(control.find('Identifier').text)
+
+controldiff = [item for item in previouscontrols if item not in latestcontrols]
+
+tree = ET.parse('./ISMExplorer/PreviousISMs/August2020ISM.xml')
+root = tree.getroot()
+
+for control in root.findall('Control'):
+  for identifier in controldiff:
+    if identifier == (control.find('Identifier').text):
+      deletedcontroldetails[identifier] = []
+      deletedcontroldetails[identifier].append({'Guideline':control.find('Guideline').text, 'Section':control.find('Section').text, 'Topic':control.find('Topic').text,
+      'Revision':control.find('Revision').text, 'Updated':control.find('Updated').text, 'OFFICIAL':control.find('OFFICIAL').text, 'PROTECTED':control.find('PROTECTED').text,
+      'SECRET':control.find('SECRET').text, 'TOP_SECRET':control.find('TOP_SECRET').text, 'Description':control.find('Description').text})
+
+sortdeletedcontrolsdetails = sorted(deletedcontroldetails.items())
+
+with open('./ISMExplorer/dataoutput/deletedcontrols.txt', 'w') as outfile:
+    json.dump(sortdeletedcontrolsdetails, outfile)
+
+with open('./ISMExplorer/dataoutput/deletedcontrols.txt') as tf:
+  delcontrolstolines = tf.readlines()
+
+subdelcontrols = re.sub(r'[\[\]\,\{\'\']', '', str(delcontrolstolines))
+delcontrolsreplace = (subdelcontrols.replace('"}', '\n'))
+delcontrolsreplace2 = (delcontrolsreplace.replace('"', ''))
 
 # Write the matching prior controls to file. 
 with open('./ISMExplorer/dataoutput/newcontrols.txt', 'w') as outfile:
@@ -145,9 +185,9 @@ totalcontrols = sum(1 for entry in root.iter('Identifier'))
 # Print number of new controls. 
 if bool(newcontrolcount) == True:
   for i in newcontrolcount:
-    print("There are " + bcolors.OKRED + str(newcontrolcount[i]) + bcolors.ENDC + " new controls in the " + ismmonth + ' ' + ismyear + " ISM.")
+    print("\nThere are " + bcolors.OKRED + str(newcontrolcount[i]) + bcolors.ENDC + " new controls in the " + ismmonth + ' ' + ismyear + " ISM.")
 else: 
-  print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' new controls in the ' + ismmonth + ' ' + ismyear + ' ISM.')
+  print("\nThere are " + bcolors.OKRED + '0' + bcolors.ENDC + ' new controls in the ' + ismmonth + ' ' + ismyear + ' ISM.')
 
 # Print number of updated controls.
 if bool(updatedcontrolcount) == True:
@@ -156,20 +196,22 @@ if bool(updatedcontrolcount) == True:
 else:
   print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' controls updated in the ' + ismmonth + ' ' + ismyear + ' ISM.')
 
-print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM')
+print('There were ' + bcolors.OKRED + str(len(controldiff)) + bcolors.ENDC + ' controls rescinded from the ' + ismmonth + ' ' + ismyear + ' ISM.')
+print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM.')
 
 # Build Report
 reportfile = open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'ISMReport.txt', 'w')
 reportfile.write(ismmonth + ' ' + ismyear + ' ISMExplorer Report\n')
 reportfile.write('ISM released on the ' + ismreleasedate + '\n')
-reportfile.write('There are ' + str(totalcontrols) + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM\n')
+reportfile.write('There are ' + str(totalcontrols) + ' controls in the ' + ismmonth + ' '  + ismyear + ' ISM\n')
 if newcontrolcount[0] == 0:
-  reportfile.write('There are no new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+  reportfile.write('\nThere are 0 new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
 else:
   reportfile.write('There are ' + newcontrolcount[0] + ' in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
   reportfile.write('\n' + newcontrolsreplace2)
+reportfile.write('\nThere were ' + str(len(controldiff)) + ' rescinded controls in the ' + ismmonth + ' ' + ismyear + ' ISM:\n' + '\n' + delcontrolsreplace2)
 for i in updatedcontrolcount:
-  reportfile.write('There are ' + str(updatedcontrolcount[i]) + ' updated controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+  reportfile.write('\nThere are ' + str(updatedcontrolcount[i]) + ' updated controls in the ' + ismmonth + ' ' + ismyear + ' ISM:\n')
 
 with open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
     json.dump(sortupdatedcontrolsdetails, outfile)
