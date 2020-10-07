@@ -123,9 +123,22 @@ for control in root.findall('Control'):
               'Revision':child.find('Revision').text, 'Updated':child.find('Updated').text, 'OFFICIAL':child.find('OFFICIAL').text, 'PROTECTED':child.find('PROTECTED').text,
               'SECRET':child.find('SECRET').text, 'TOP_SECRET':child.find('TOP_SECRET').text, 'Description':child.find('Description').text})
 
+sortnewcontrolsdetails = sorted(newcontroldetails.items())
 sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
 newcontrolcount = Counter(newcontrol)
 updatedcontrolcount = Counter(updatedcontrol)
+
+# Write the matching prior controls to file. 
+with open('./ISMExplorer/dataoutput/newcontrols.txt', 'w') as outfile:
+    json.dump(sortnewcontrolsdetails, outfile)
+
+with open('./ISMExplorer/dataoutput/newcontrols.txt') as tf:
+    newcontrolstolines = tf.readlines()
+
+# Perform a number a substitute and replace actions on the new ISM controls to prepare for diff. 
+subnewcontrols = re.sub(r'[\[\]\,\{\'\']', '', str(newcontrolstolines))
+newcontrolsreplace = (subnewcontrols.replace('"}', ' \n'))
+newcontrolsreplace2 = (newcontrolsreplace.replace('"', ''))
 
 totalcontrols = sum(1 for entry in root.iter('Identifier'))
 
@@ -148,13 +161,15 @@ print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' contr
 # Build Report
 reportfile = open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'ISMReport.txt', 'w')
 reportfile.write(ismmonth + ' ' + ismyear + ' ISMExplorer Report\n')
+reportfile.write('ISM released on the ' + ismreleasedate + '\n')
+reportfile.write('There are ' + str(totalcontrols) + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM\n')
 if newcontrolcount[0] == 0:
   reportfile.write('There are no new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
 else:
   reportfile.write('There are ' + newcontrolcount[0] + ' in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+  reportfile.write('\n' + newcontrolsreplace2)
 for i in updatedcontrolcount:
   reportfile.write('There are ' + str(updatedcontrolcount[i]) + ' updated controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
-#reportfile.write('There are ' + str(totalcontrols) + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM\n')
 
 with open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
     json.dump(sortupdatedcontrolsdetails, outfile)
