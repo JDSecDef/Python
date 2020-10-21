@@ -14,11 +14,12 @@ currentyear     = currentdate.strftime("%Y")
 getlastmonth    = date.today() -relativedelta(months=1)
 lastmonth       = format(getlastmonth, '%B')
 
-updatedcontrolsfile = open('./ISMExplorer/dataoutput/September2020updatedcontrols.txt')
+updatedcontrolsfile = open('./dataoutput/' + currentmonth + currentyear + 'updatedcontrols.txt')
 
-diffoutfile = open('./ISMExplorer/dataoutput/' + lastmonth + currentyear + 'controldiff.txt', 'w')
+diffoutfile = open('./dataoutput/' + currentmonth + currentyear + 'controldiff.txt', 'w')
 
-tree = ET.parse('./ISMExplorer/PreviousISMs/August2020ISM.xml')
+#tree = ET.parse('./ISMExplorer/PreviousISMs/August2020ISM.xml')
+tree= ET.parse('./PreviousISMs/' + lastmonth + currentyear + 'ISM.xml')
 root = tree.getroot()
 
 extractcontrols = []
@@ -41,13 +42,13 @@ for control in root.findall('Control'):
 sortpriorcontrolsdetails = sorted(priorcontroldetails.items())
 
 # Write the matching prior controls to file. 
-with open('./ISMExplorer/dataoutput/priorcontrols.txt', 'w') as outfile:
+with open('./dataoutput/priorcontrols.txt', 'w') as outfile:
     json.dump(sortpriorcontrolsdetails, outfile)
 
 # Open the updated controls and prior controls and read to lines. 
-with open('./ISMExplorer/dataoutput/September2020updatedcontrols.txt') as ff:
+with open('./dataoutput/' + currentmonth + currentyear + 'updatedcontrols.txt') as ff:
     updatedcontrolstolines = ff.readlines()
-with open('./ISMExplorer/dataoutput/priorcontrols.txt') as tf:
+with open('./dataoutput/priorcontrols.txt') as tf:
     priorcontrolstolines = tf.readlines()
 
 # Perform a number a substitute and replace actions on the updated ISM controls to prepare for diff. 
@@ -71,5 +72,5 @@ diffresult = difflib.ndiff(priorcontrolssplit, updatedcontrolssplit)
 diffjoin = (''.join(diffresult))
 diffoutfile.writelines(diffjoin)
 
-with open('./ISMExplorer/dataoutput/September2020ISMReport.txt', "a") as reportfile:
+with open('./dataoutput/' + currentmonth + currentyear + 'ISMReport.txt', "a") as reportfile:
     reportfile.write('\n' + diffjoin)

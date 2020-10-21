@@ -80,20 +80,20 @@ else:
   exit()
 open('./ISM.xml', 'wb').write(retrievexml.content)
 
-if os.path.isfile('./' + ismversion):
+if os.path.isfile('./CurrentISM/' + ismversion):
   print('[+]\t' + ismmonth + ' ' + ismyear + ' ISM already exists on filesystem.')
-elif not os.path.isfile('./' + ismversion):
+elif not os.path.isfile('./CurrentISM/' + ismversion):
   print('[+]\tNew ISM Version identified!')
-  if os.path.isfile('./' + oldismversion):
+  if os.path.isfile('./CurrentISM/' + oldismversion):
     print('[+]\tlocated previous ISM file. Moving to other folder.')
-    shutil.move('./' + oldismversion, './PreviousISMs/' + oldismversion)
-  elif os.path.isfile('./' + lastmonthism):
+    shutil.move('./CurrentISM/' + oldismversion, './PreviousISMs/' + oldismversion)
+  elif os.path.isfile('./CurrentISM/' + lastmonthism):
     print('[+]\tfile not found')
-    shutil.move('./' + lastmonthism, './PreviousISMs/' + lastmonthism)
+    shutil.move('./CurrentISM/' + lastmonthism, './PreviousISMs/' + lastmonthism)
 
-open('./' + ismversion, 'wb').write(retrievexml.content)
+open('./CurrentISM/' + ismversion, 'wb').write(retrievexml.content)
 
-tree = ET.parse('./' + ismversion)
+tree = ET.parse('./CurrentISM/' + ismversion)
 root = tree.getroot()
 
 # Identify new controls in the ISM and add them to the newcontrol variable. 
@@ -132,12 +132,12 @@ for control in root.findall('Control'):
 sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
 updatedcontrolcount = Counter(updatedcontrol)
 
-tree = ET.parse('./ISMExplorer/PreviousISMs/August2020ISM.xml')
+tree= ET.parse('./PreviousISMs/' + lastmonthism)
 root = tree.getroot()
 for control in root.findall('Control'):
   previouscontrols.append(control.find('Identifier').text)
 
-tree = ET.parse('./ISMExplorer/CurrentISM/September2020ISM.xml')
+tree = ET.parse('./CurrentISM/' + ismversion)
 root = tree.getroot()
 
 for control in root.findall('Control'):
@@ -145,7 +145,7 @@ for control in root.findall('Control'):
 
 controldiff = [item for item in previouscontrols if item not in latestcontrols]
 
-tree = ET.parse('./ISMExplorer/PreviousISMs/August2020ISM.xml')
+tree= ET.parse('./PreviousISMs/' + lastmonthism)
 root = tree.getroot()
 
 for control in root.findall('Control'):
@@ -158,10 +158,10 @@ for control in root.findall('Control'):
 
 sortdeletedcontrolsdetails = sorted(deletedcontroldetails.items())
 
-with open('./ISMExplorer/dataoutput/deletedcontrols.txt', 'w') as outfile:
+with open('./dataoutput/deletedcontrols.txt', 'w') as outfile:
     json.dump(sortdeletedcontrolsdetails, outfile)
 
-with open('./ISMExplorer/dataoutput/deletedcontrols.txt') as tf:
+with open('./dataoutput/deletedcontrols.txt') as tf:
   delcontrolstolines = tf.readlines()
 
 subdelcontrols = re.sub(r'[\[\]\,\{\'\']', '', str(delcontrolstolines))
@@ -169,10 +169,10 @@ delcontrolsreplace = (subdelcontrols.replace('"}', '\n'))
 delcontrolsreplace2 = (delcontrolsreplace.replace('"', ''))
 
 # Write the matching prior controls to file. 
-with open('./ISMExplorer/dataoutput/newcontrols.txt', 'w') as outfile:
+with open('./dataoutput/newcontrols.txt', 'w') as outfile:
     json.dump(sortnewcontrolsdetails, outfile)
 
-with open('./ISMExplorer/dataoutput/newcontrols.txt') as tf:
+with open('./dataoutput/newcontrols.txt') as tf:
     newcontrolstolines = tf.readlines()
 
 # Perform a number a substitute and replace actions on the new ISM controls to prepare for diff. 
@@ -200,18 +200,19 @@ print('There were ' + bcolors.OKRED + str(len(controldiff)) + bcolors.ENDC + ' c
 print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM.')
 
 # Build Report
-reportfile = open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'ISMReport.txt', 'w')
+reportfile = open('./dataoutput/' + ismmonth + ismyear + 'ISMReport.txt', 'w')
 reportfile.write(ismmonth + ' ' + ismyear + ' ISMExplorer Report\n')
 reportfile.write('ISM released on the ' + ismreleasedate + '\n')
 reportfile.write('There are ' + str(totalcontrols) + ' controls in the ' + ismmonth + ' '  + ismyear + ' ISM\n')
-if newcontrolcount[0] == 0:
+if newcontrolcount == 0:
   reportfile.write('\nThere are 0 new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
 else:
-  reportfile.write('There are ' + newcontrolcount[0] + ' in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
-  reportfile.write('\n' + newcontrolsreplace2)
+  for i in newcontrolcount:
+    reportfile.write('There are ' + str(newcontrolcount[i]) + ' new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+    reportfile.write('\n' + newcontrolsreplace2)
 reportfile.write('\nThere were ' + str(len(controldiff)) + ' rescinded controls in the ' + ismmonth + ' ' + ismyear + ' ISM:\n' + '\n' + delcontrolsreplace2)
 for i in updatedcontrolcount:
   reportfile.write('\nThere are ' + str(updatedcontrolcount[i]) + ' updated controls in the ' + ismmonth + ' ' + ismyear + ' ISM:\n')
 
-with open('./ISMExplorer/dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
+with open('./dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
     json.dump(sortupdatedcontrolsdetails, outfile)
