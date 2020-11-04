@@ -8,8 +8,6 @@ import requests
 import xml.etree.ElementTree as ET
 import re
 import bs4
-import matplotlib.pyplot as plt
-import numpy as np
 from collections import Counter
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -56,7 +54,7 @@ url = 'https://www.cyber.gov.au/acsc/view-all-content/ism'
 retrievehtml = requests.get(url, allow_redirects=True)
 nosoup = bs4.BeautifulSoup(retrievehtml.text, features="lxml")
 
-print('[+]\tScraping ' + url + ' to find ISM XML file.')
+print(f'[+]\tScraping {url} to find ISM XML file.')
 gethref = (nosoup.find(href=re.compile(".xml")))
 xmlurl = gethref.get('href')
 
@@ -71,17 +69,17 @@ oldismversion = currentmonth + currentyear + 'ISM.xml'
 lastmonthism = lastmonth + currentyear + 'ISM.xml'
 
 # Retrieve xml file from CGA.
-print('[+]\tDownloading the ' + ismmonth + ' ' + ismyear + ' ISM XML file from ' + url)
+print(f'[+]\tDownloading the {ismmonth} {ismyear} ISM XML file from {url}')
 retrievexml = requests.get(xmlurl, allow_redirects=True)
 if '200' in str(retrievexml):
-  print('[+]\t' + ismmonth + ' ' + ismyear + ' ISM downloaded successfully.')
+  print(f'[+]\t{ismmonth} {ismyear} ISM downloaded successfully.')
 else:
   print('ISM XML file failed to download')
   exit()
 open('./ISM.xml', 'wb').write(retrievexml.content)
 
 if os.path.isfile('./CurrentISM/' + ismversion):
-  print('[+]\t' + ismmonth + ' ' + ismyear + ' ISM already exists on filesystem.')
+  print(f'[+]\t{ismmonth} {ismyear} ISM already exists on filesystem.')
 elif not os.path.isfile('./CurrentISM/' + ismversion):
   print('[+]\tNew ISM Version identified!')
   if os.path.isfile('./CurrentISM/' + oldismversion):
@@ -185,34 +183,34 @@ totalcontrols = sum(1 for entry in root.iter('Identifier'))
 # Print number of new controls. 
 if bool(newcontrolcount) == True:
   for i in newcontrolcount:
-    print("\nThere are " + bcolors.OKRED + str(newcontrolcount[i]) + bcolors.ENDC + " new controls in the " + ismmonth + ' ' + ismyear + " ISM.")
+    print(f'\nThere are {bcolors.OKRED}{newcontrolcount[i]}{bcolors.ENDC} new controls in the {ismmonth} {ismyear} ISM.')
 else: 
-  print("\nThere are " + bcolors.OKRED + '0' + bcolors.ENDC + ' new controls in the ' + ismmonth + ' ' + ismyear + ' ISM.')
+  print(f'\nThere are {bcolors.OKRED}0{bcolors.ENDC} new controls in the {ismmonth} {ismyear} ISM.')
 
 # Print number of updated controls.
 if bool(updatedcontrolcount) == True:
   for i in updatedcontrolcount:
-    print("There are " + bcolors.OKRED + str(updatedcontrolcount[i]) + bcolors.ENDC + " updated controls in the " + ismmonth + ' ' + ismyear + " ISM.")
+    print(f'There are {bcolors.OKRED}{(updatedcontrolcount[i])}{bcolors.ENDC} updated controls in the {ismmonth} {ismyear} ISM.')
 else:
-  print("There are " + bcolors.OKRED + '0' + bcolors.ENDC + ' controls updated in the ' + ismmonth + ' ' + ismyear + ' ISM.')
+  print(f'There are {bcolors.OKRED}0{bcolors.ENDC} updated controls in the {ismmonth} {ismyear} ISM.')
 
-print('There were ' + bcolors.OKRED + str(len(controldiff)) + bcolors.ENDC + ' controls rescinded from the ' + ismmonth + ' ' + ismyear + ' ISM.')
-print('There are ' + bcolors.OKRED + str(totalcontrols) + bcolors.ENDC + ' controls in total in the ' + ismmonth + ' '  + ismyear + ' ISM.')
+print(f'There were {bcolors.OKRED}{(len(controldiff))}{bcolors.ENDC} controls rescinded from the {ismmonth} {ismyear} ISM.')
+print(f'There are {bcolors.OKRED}{(totalcontrols)}{bcolors.ENDC} controls in total in the {ismmonth} {ismyear} ISM.')
 
 # Build Report
 reportfile = open('./dataoutput/' + ismmonth + ismyear + 'ISMReport.txt', 'w')
-reportfile.write(ismmonth + ' ' + ismyear + ' ISMExplorer Report\n')
-reportfile.write('ISM released on the ' + ismreleasedate + '\n')
-reportfile.write('There are ' + str(totalcontrols) + ' controls in the ' + ismmonth + ' '  + ismyear + ' ISM\n')
+reportfile.write(f'{ismmonth} {ismyear} ISMExplorer Report\n')
+reportfile.write(f'ISM released on the {ismreleasedate}\n')
+reportfile.write(f'There are {(totalcontrols)} controls in the {ismmonth} {ismyear} ISM\n')
 if newcontrolcount == 0:
-  reportfile.write('\nThere are 0 new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
+  reportfile.write(f'\nThere are 0 new controls in the {ismmonth} {ismyear} ISM\n')
 else:
   for i in newcontrolcount:
-    reportfile.write('There are ' + str(newcontrolcount[i]) + ' new controls in the ' + ismmonth + ' ' + ismyear + ' ISM\n')
-    reportfile.write('\n' + newcontrolsreplace2)
-reportfile.write('\nThere were ' + str(len(controldiff)) + ' rescinded controls in the ' + ismmonth + ' ' + ismyear + ' ISM:\n' + '\n' + delcontrolsreplace2)
+    reportfile.write(f'There are {(newcontrolcount[i])} new controls in the {ismmonth} {ismyear} ISM\n')
+    reportfile.write(f'\n{newcontrolsreplace2}')
+reportfile.write(f'\nThere were {(len(controldiff))} rescinded controls in the {ismmonth} {ismyear} ISM:\n \n {delcontrolsreplace2}')
 for i in updatedcontrolcount:
-  reportfile.write('\nThere are ' + str(updatedcontrolcount[i]) + ' updated controls in the ' + ismmonth + ' ' + ismyear + ' ISM:\n')
+  reportfile.write(f'\nThere are {(updatedcontrolcount[i])} updated controls in the {ismmonth} {ismyear} ISM:\n')
 
 with open('./dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
     json.dump(sortupdatedcontrolsdetails, outfile)
