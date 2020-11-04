@@ -94,6 +94,9 @@ open('./CurrentISM/' + ismversion, 'wb').write(retrievexml.content)
 tree = ET.parse('./CurrentISM/' + ismversion)
 root = tree.getroot()
 
+# Get total number of controls
+totalcontrols = sum(1 for entry in root.iter('Control'))
+
 # Identify new controls in the ISM and add them to the newcontrol variable. 
 # For identified controls, scrape all of the control details and add to the newcontroldetails variable.
 for control in root.findall('Control'):
@@ -179,8 +182,6 @@ tf.close()
 subnewcontrols = re.sub(r'[\[\]\,\{\'\']', '', str(newcontrolstolines))
 newcontrolsreplace = (subnewcontrols.replace('"}', ' \n'))
 newcontrolsreplace2 = (newcontrolsreplace.replace('"', ''))
-
-totalcontrols = sum(1 for entry in root.iter('Identifier'))
 
 with open('./dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
     json.dump(sortupdatedcontrolsdetails, outfile)
