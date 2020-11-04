@@ -63,7 +63,7 @@ getdate = spliturl[7]
 ismmonth = ''.join([i for i in spliturl[7] if not i.isdigit()])
 ismyear = (spliturl[8])
 ismyear = ismyear[2:7]
-ismreleasedate = getdate[0:2] + ' ' + ismmonth + ' ' + ismyear
+ismreleasedate = (f'{getdate[0:2]} {ismmonth} {ismyear}')
 ismversion = ismmonth + ismyear + 'ISM.xml'
 oldismversion = currentmonth + currentyear + 'ISM.xml'
 lastmonthism = lastmonth + currentyear + 'ISM.xml'
@@ -130,7 +130,7 @@ for control in root.findall('Control'):
 sortupdatedcontrolsdetails = sorted(updatedcontroldetails.items())
 updatedcontrolcount = Counter(updatedcontrol)
 
-tree= ET.parse('./PreviousISMs/' + lastmonthism)
+tree = ET.parse('./PreviousISMs/' + lastmonthism)
 root = tree.getroot()
 for control in root.findall('Control'):
   previouscontrols.append(control.find('Identifier').text)
@@ -169,9 +169,11 @@ delcontrolsreplace2 = (delcontrolsreplace.replace('"', ''))
 # Write the matching prior controls to file. 
 with open('./dataoutput/newcontrols.txt', 'w') as outfile:
     json.dump(sortnewcontrolsdetails, outfile)
+outfile.close()
 
 with open('./dataoutput/newcontrols.txt') as tf:
     newcontrolstolines = tf.readlines()
+tf.close()
 
 # Perform a number a substitute and replace actions on the new ISM controls to prepare for diff. 
 subnewcontrols = re.sub(r'[\[\]\,\{\'\']', '', str(newcontrolstolines))
@@ -179,6 +181,9 @@ newcontrolsreplace = (subnewcontrols.replace('"}', ' \n'))
 newcontrolsreplace2 = (newcontrolsreplace.replace('"', ''))
 
 totalcontrols = sum(1 for entry in root.iter('Identifier'))
+
+with open('./dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
+    json.dump(sortupdatedcontrolsdetails, outfile)
 
 # Print number of new controls. 
 if bool(newcontrolcount) == True:
@@ -211,6 +216,4 @@ else:
 reportfile.write(f'\nThere were {(len(controldiff))} rescinded controls in the {ismmonth} {ismyear} ISM:\n \n {delcontrolsreplace2}')
 for i in updatedcontrolcount:
   reportfile.write(f'\nThere are {(updatedcontrolcount[i])} updated controls in the {ismmonth} {ismyear} ISM:\n')
-
-with open('./dataoutput/' + ismmonth + ismyear + 'updatedcontrols.txt', 'w') as outfile:
-    json.dump(sortupdatedcontrolsdetails, outfile)
+reportfile.close()
